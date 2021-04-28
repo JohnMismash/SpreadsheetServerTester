@@ -182,9 +182,9 @@ int main(int argc, char* argv[])
       return 1;
     }
 
-    else if(argc != 3)
+    else if(argc != 3 || argc != 1)
     {
-      std::cerr << "Invalid arguments\n";
+      std::cerr << "Invalid arguments: Must provide two arguments or zero arguments\n";
       return 1;
     }
 
