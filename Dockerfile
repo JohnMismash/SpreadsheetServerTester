@@ -12,4 +12,4 @@ RUN apt-get -y update && apt-get -y install \
 
 COPY . /tester
 
-RUN cd tester && make
+RUN cd tester && make && ./a.out 
