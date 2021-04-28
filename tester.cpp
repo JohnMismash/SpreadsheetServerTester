@@ -1,12 +1,14 @@
-//
-// blocking_tcp_echo_client.cpp
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-//
-// Copyright (c) 2003-2021 Christopher M. Kohlhoff (chris at kohlhoff dot com)
-//
-// Distributed under the Boost Software License, Version 1.0. (See accompanying
-// file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
-//
+/**
+ * Spreadsheet header declarations.
+ * Please read the corresponding .cpp file for function documentation.
+ *
+ * CS 3505 - Software Practice II
+ * Spreadsheet Client/SpreadsheetServer
+ *
+ *  @authors: Sam Smith, Wil Thompson, Harrison Fackrell, John (Jack) Mismash
+ *            William Le, Annie Ruiz
+ *
+ */
 
 #include <cstdlib>
 #include <cstring>
@@ -61,6 +63,7 @@ void DataSent(const boost::system::error_code& error, size_t bytes_transferred)
       s.close();
     }
   }
+
 void Loop(const boost::system::error_code& error, size_t bytes_transferred)
 {
   currentMessage = message;
@@ -148,6 +151,54 @@ void test1()
   }
 }
 
+void test2()
+{
+  handshake();
+
+  sendMessage("{requestType:\"editCell\", cellName: \"A1\",contents: \"hello\"}0");
+  std::cout << "current message = " << currentMessage << std::endl;
+  if(currentMessage == "{messageType:\"cellUpdated\", cellName: \"A1\",contents: \"hello\"}")
+  {
+    std::cout << "pass" << std::endl;
+  }
+  else
+  {
+    std::cout << "fail" << std::endl;
+  }
+}
+
+void test3()
+{
+  handshake();
+
+  sendMessage("{requestType:\"editCell\", cellName: \"A1\",contents: \"hello\"}0");
+  std::cout << "current message = " << currentMessage << std::endl;
+  if(currentMessage == "{messageType:\"cellUpdated\", cellName: \"A1\",contents: \"hello\"}")
+  {
+    std::cout << "pass" << std::endl;
+  }
+  else
+  {
+    std::cout << "fail" << std::endl;
+  }
+}
+
+void test4()
+{
+  handshake();
+
+  sendMessage("{requestType:\"editCell\", cellName: \"A1\",contents: \"hello\"}0");
+  std::cout << "current message = " << currentMessage << std::endl;
+  if(currentMessage == "{messageType:\"cellUpdated\", cellName: \"A1\",contents: \"hello\"}")
+  {
+    std::cout << "pass" << std::endl;
+  }
+  else
+  {
+    std::cout << "fail" << std::endl;
+  }
+}
+
 int main(int argc, char* argv[])
 {
 
@@ -157,19 +208,32 @@ int main(int argc, char* argv[])
       std::cout << "print number of tests" << std::endl;
       return 1;
     }
-    else if(argc != 3)
+
+    else if(argc != 3 || argc != 1)
     {
-      std::cerr << "Invalid arguments\n";
+      std::cerr << "Invalid arguments: Must provide two arguments or zero arguments\n";
       return 1;
     }
+
     else
     {
-      //switch statement to determine what test to run
-      std::cout << argv[1] << " " << argv[2] << std::endl;
-      address = argv[1];
-      port = argv[2];
-      test1();
+      int test_number = (int)(argv[1]);
+      switch(test_number) {
+        case 1:
+          test1();
+          break; //optional
+        case 2:
+          test2();
+          break; //optional
+        case 3:
+          test3();
+          break;
+        case 4:
+          test4();
+          break;
+
+        default:
+          break;
+        }
     }
-
-
 }
