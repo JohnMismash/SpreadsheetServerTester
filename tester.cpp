@@ -21,14 +21,37 @@ using boost::asio::ip::tcp;
 enum { max_length = 1024 };
 char* port = 0;
 char* address = 0;
-
 boost::asio::io_context io_context;
-tcp::resolver resolver(io_context);
-tcp::resolver::results_type endpoints;
-
-tcp::socket s(io_context);
+//boost::asio::io_context io_context;
+//tcp::resolver::results_type endpoints;
 std::string currentMessage;
-char message[max_length];
+
+class Client : public boost::enable_shared_from_this<Client>
+{
+  //boost::asio::io_context& io_context;
+  tcp::resolver::results_type endpoints;
+  char message[max_length];
+  tcp::socket s;
+  tcp::resolver resolver;
+
+public:
+
+  //renames shared_ptr to connection to pointer
+  typedef boost::shared_ptr<Client> pointer;
+
+  pointer Create(boost::asio::io_context& io_context)
+  {
+    return pointer(new Client(io_context));
+  }
+
+  Client(boost::asio::io_context& io_context) : endpoints(), s(io_context), resolver(io_context)
+  {
+    //tcp::resolver resolver(io_context);
+    //tcp::socket s(io_context);
+  }
+
+
+
 void DataSent(const boost::system::error_code& error, size_t bytes_transferred)
   {
     std::cout << "data sent" << std::endl;
@@ -43,7 +66,7 @@ void Loop(const boost::system::error_code& error, size_t bytes_transferred)
   currentMessage = message;
   std::cout << "current message is " << currentMessage << std::endl;
   s.async_read_some(boost::asio::buffer(message, sizeof(message)),
-          boost::bind(Loop,
+          boost::bind(&Client::Loop, shared_from_this(),
             boost::asio::placeholders::error,
             boost::asio::placeholders::bytes_transferred));
 
@@ -55,7 +78,7 @@ void setUpClient(std::string messageToSend)
     strcpy(message, messageToSend.c_str());
     boost::asio::async_write(s,
           boost::asio::buffer(message),
-          boost::bind(Loop,
+          boost::bind(&Client::Loop, shared_from_this(),
             boost::asio::placeholders::error, boost::asio::placeholders::bytes_transferred));
 }
 void sendMessage (std::string messageToSend)
@@ -75,7 +98,7 @@ void sendMessage (std::string messageToSend)
   //size_t request_length = strlen(request);
   boost::asio::async_write(s,
         boost::asio::buffer(message),
-        boost::bind(DataSent,
+        boost::bind(&Client::DataSent, shared_from_this(),
           boost::asio::placeholders::error, boost::asio::placeholders::bytes_transferred));
   //boost::asio:async_write(s, boost::asio::buffer(request, request_length));
 
@@ -93,24 +116,27 @@ catch (std::exception& e)
 }
 
 }
+};
 
 
 
-void handshake()
+void handshake(Client* client)
 {
-  setUpClient("username");
+  client->setUpClient("username");
   std::cout << "finished setting up" << std::endl;
   //sendMessage("username");
   std::cout << "sending spreadsheets" << std::endl;
-  sendMessage("spreadsheet1");
+  client->sendMessage("spreadsheet1");
 
 }
 
 void test1()
 {
-  handshake();
+  Client::pointer client = Client::Create(io_context);
+  //Client* client = new Client();
+  handshake(client);
 
-  sendMessage("{requestType:\"editCell\", cellName: \"A1\",contents: \"hello\"}0");
+  client->sendMessage("{requestType:\"editCell\", cellName: \"A1\",contents: \"hello\"}0");
   std::cout << "current message = " << currentMessage << std::endl;
   if(currentMessage == "{messageType:\"cellUpdated\", cellName: \"A1\",contents: \"hello\"}")
   {
