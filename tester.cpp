@@ -1,12 +1,14 @@
-//
-// blocking_tcp_echo_client.cpp
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-//
-// Copyright (c) 2003-2021 Christopher M. Kohlhoff (chris at kohlhoff dot com)
-//
-// Distributed under the Boost Software License, Version 1.0. (See accompanying
-// file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
-//
+/**
+ * Spreadsheet header declarations.
+ * Please read the corresponding .cpp file for function documentation.
+ *
+ * CS 3505 - Software Practice II
+ * Spreadsheet Client/SpreadsheetServer
+ *
+ *  @authors: Sam Smith, Wil Thompson, Harrison Fackrell, John (Jack) Mismash
+ *            William Le, Annie Ruiz
+ *
+ */
 
 #include <cstdlib>
 #include <cstring>
@@ -94,8 +96,6 @@ catch (std::exception& e)
 
 }
 
-
-
 void handshake()
 {
   setUpClient("username");
@@ -107,6 +107,54 @@ void handshake()
 }
 
 void test1()
+{
+  handshake();
+
+  sendMessage("{requestType:\"editCell\", cellName: \"A1\",contents: \"hello\"}0");
+  std::cout << "current message = " << currentMessage << std::endl;
+  if(currentMessage == "{messageType:\"cellUpdated\", cellName: \"A1\",contents: \"hello\"}")
+  {
+    std::cout << "pass" << std::endl;
+  }
+  else
+  {
+    std::cout << "fail" << std::endl;
+  }
+}
+
+void test2()
+{
+  handshake();
+
+  sendMessage("{requestType:\"editCell\", cellName: \"A1\",contents: \"hello\"}0");
+  std::cout << "current message = " << currentMessage << std::endl;
+  if(currentMessage == "{messageType:\"cellUpdated\", cellName: \"A1\",contents: \"hello\"}")
+  {
+    std::cout << "pass" << std::endl;
+  }
+  else
+  {
+    std::cout << "fail" << std::endl;
+  }
+}
+
+void test3()
+{
+  handshake();
+
+  sendMessage("{requestType:\"editCell\", cellName: \"A1\",contents: \"hello\"}0");
+  std::cout << "current message = " << currentMessage << std::endl;
+  if(currentMessage == "{messageType:\"cellUpdated\", cellName: \"A1\",contents: \"hello\"}")
+  {
+    std::cout << "pass" << std::endl;
+  }
+  else
+  {
+    std::cout << "fail" << std::endl;
+  }
+}
+
+void test4()
 {
   handshake();
 
@@ -138,6 +186,21 @@ int main(int argc, char* argv[])
     }
     else
     {
+
+      int test_number = (int)(argv[1]);
+      switch(test_number) {
+        case 0:
+          test1();
+          break; //optional
+        case 1:
+          test2();
+          break; //optional
+        case 2:
+
+
+        default : //Optional
+          //statement(s);
+}
       //switch statement to determine what test to run
       std::cout << argv[1] << " " << argv[2] << std::endl;
       address = argv[1];
