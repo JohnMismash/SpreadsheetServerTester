@@ -8,8 +8,8 @@ ENV TZ="America/Salt Lake City"
 RUN apt-get -y update && apt-get -y install \
   build-essential \
   libboost-all-dev \
-  && mkdir /tester && cd /tester
+  && mkdir /tester
 
-COPY . /tester
+COPY . .
 
-RUN cd tester && make && ./a.out 
+RUN  make

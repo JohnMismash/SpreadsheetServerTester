@@ -21,8 +21,8 @@
 using boost::asio::ip::tcp;
 
 enum { max_length = 1024 };
-char* port = 0;
-char* address = 0;
+std::string port = "";
+std::string address = "";
 boost::asio::io_context io_context;
 std::string currentMessage;
 
@@ -136,70 +136,64 @@ void test1()
   }
 }
 
-// void test2()
-// {
-//   handshake();
-//
-//   sendMessage("{requestType:\"editCell\", cellName: \"A1\",contents: \"hello\"}0");
-//   std::cout << "current message = " << currentMessage << std::endl;
-//   if(currentMessage == "{messageType:\"cellUpdated\", cellName: \"A1\",contents: \"hello\"}")
-//   {
-//     std::cout << "pass" << std::endl;
-//   }
-//   else
-//   {
-//     std::cout << "fail" << std::endl;
-//   }
-// }
-//
-// void test3()
-// {
-//   handshake();
-//
-//   sendMessage("{requestType:\"editCell\", cellName: \"A1\",contents: \"hello\"}0");
-//   std::cout << "current message = " << currentMessage << std::endl;
-//   if(currentMessage == "{messageType:\"cellUpdated\", cellName: \"A1\",contents: \"hello\"}")
-//   {
-//     std::cout << "pass" << std::endl;
-//   }
-//   else
-//   {
-//     std::cout << "fail" << std::endl;
-//   }
-// }
-//
-// void test4()
-// {
-//   handshake();
-//
-//   sendMessage("{requestType:\"editCell\", cellName: \"A1\",contents: \"hello\"}0");
-//   std::cout << "current message = " << currentMessage << std::endl;
-//   if(currentMessage == "{messageType:\"cellUpdated\", cellName: \"A1\",contents: \"hello\"}")
-//   {
-//     std::cout << "pass" << std::endl;
-//   }
-//   else
-//   {
-//     std::cout << "fail" << std::endl;
-//   }
-// }
+void test2()
+{
+  //TODO: Set up timer
+  Client* client = new Client(io_context);
+  std::string username = "username";
+  handshake(client, username);
+
+  client->sendNoRecieve("{\"requestType\":\"selectCell\",\"cellName\":\"A1\"}\n");
+  client->sendMessage("{\"requestType\":\"editCell\",\"cellName\":\"A1\",\"contents\":\"hello\"}\n");
+  client->sendMessage("{\"requestType\":\"editCell\",\"cellName\":\"A1\",\"contents\":\"yeet\"}\n");
+
+  if(currentMessage == "{messageType: \"cellUpdated\", cellName: \"A1\", contents: \"yeet\"}\n")
+  {
+    std::cout << "pass" << std::endl;
+  }
+  else
+  {
+    std::cout << "fail" << std::endl;
+  }
+}
+
+void test3()
+{
+  //TODO: Set up timer
+  Client* client = new Client(io_context);
+  std::string username = "username";
+  handshake(client, username);
+
+  client->sendNoRecieve("{\"requestType\":\"selectCell\",\"cellName\":\"A1\"}\n");
+  client->sendMessage("{\"requestType\":\"editCell\",\"cellName\":\"A1\",\"contents\":\"hello\"}\n");
+
+  if(currentMessage == "{messageType: \"cellUpdated\", cellName: \"A1\", contents: \"hello\"}\n")
+  {
+    std::cout << "pass" << std::endl;
+  }
+  else
+  {
+    std::cout << "fail" << std::endl;
+  }
+}
+
+std::vector<std::string> split(const std::string str, char delim)
+{
+  std::vector<std::string> result;
+  std::istringstream ss{str};
+  std::string token;
+  while (std::getline(ss, token, delim)) {
+    if (!token.empty()) {
+      result.push_back(token);
+    }
+  }
+  return result;
+}
 
 int main(int argc, char* argv[])
 {
 
-  // Use this to seperate port and address
-  std::string str = argv[2];
-  std::replace(str.begin(), str.end(), ':', ' ');  // replace ':' by ' '
 
-  std::vector<char*> array;
-  std::stringstream ss(str);
-  char* temp;
-  while (ss >> temp)
-    array.push_back(temp);
-  //strcpy(address, array[0]);
-  //strcpy(port, array[1]);
-  address = array[0];
-  port = array[1];
 
 
 
@@ -222,13 +216,27 @@ int main(int argc, char* argv[])
 
     else
     {
-      int test_number = std::atoi(argv[1]);
+      std::string addressAndPort= argv[2];
+      std::vector<std::string> data = split(addressAndPort, ':');
+      std::cout << "data size " << data.size() << std::endl;
+      //strcpy(address, data[0].c_str());
+      std::cout << data[0] << std::endl;
+      std::cout << data[1] << std::endl;
+      address = data[0];
+      port = data[1];
+      std::cout << "got address" << std::endl;
+      //strcpy(port, data[1].c_str());
+      //address = data[0];
+
+      //port = data[1];
+      int test_number = 2;
+
       switch(test_number) {
         case 1:
           test1();
           break; //optional
         case 2:
-          //test2();
+          test2();
           break; //optional
         case 3:
           //test3();

@@ -1,8 +1,8 @@
-a.out: tester.o
-	g++ tester.o -pthread
+spreadsheet_tester: tester.o
+	g++ -o spreadsheet_tester tester.o -pthread
 
 tester.o: tester.cpp
 	g++ -c tester.cpp
 
 clean:
-	rm -f tester.o a.out
+	rm -f tester.o spreadsheet_tester
