@@ -146,7 +146,6 @@ void testUpdateSingleCell()
 
 void testUpdateMultipleCells()
 {
-  //TODO: Set up timer
   std::cout << "Test Name: " << "testUpdateMultipleCells" << std::endl;
   auto start = high_resolution_clock::now();
   bool pass = false;
@@ -187,7 +186,6 @@ void testUpdateMultipleCells()
 
 void testCircularDependency()
 {
-  //TODO: Set up timer
   std::cout << "Test Name: " << "testCircularDependency" << std::endl;
   auto start = high_resolution_clock::now();
   Client* client = new Client(io_context);
@@ -214,7 +212,6 @@ void testCircularDependency()
 
 void testLongCircularDependency()
 {
-  //TODO: Set up timer
   std::cout << "Test Name: " << "testLongCircularDependency" << std::endl;
   auto start = high_resolution_clock::now();
   Client* client = new Client(io_context);
@@ -243,7 +240,6 @@ void testLongCircularDependency()
 
 void testRevert ()
 {
-  //TODO: Set up timer
   std::cout << "Test Name: " << "testRevert" << std::endl;
   auto start = high_resolution_clock::now();
   Client* client = new Client(io_context);
@@ -271,7 +267,6 @@ void testRevert ()
 
 void testMultipleReverts ()
 {
-  //TODO: Set up timer
   std::cout << "Test Name: " << "testMultipleReverts" << std::endl;
   auto start = high_resolution_clock::now();
   Client* client = new Client(io_context);
@@ -303,7 +298,6 @@ void testMultipleReverts ()
 
 void testUndo ()
 {
-  //TODO: Set up timer
   std::cout << "Test Name: " << "testUndo" << std::endl;
   auto start = high_resolution_clock::now();
   Client* client = new Client(io_context);
@@ -331,7 +325,6 @@ void testUndo ()
 
 void testUndo2()
 {
-  //TODO: Set up timer
   std::cout << "Test Name: " << "testUndo2" << std::endl;
   auto start = high_resolution_clock::now();
   Client* client = new Client(io_context);
@@ -362,7 +355,6 @@ void testUndo2()
 
 void testInvalidFormula ()
 {
-  //TODO: Set up timer
   std::cout << "Test Name: " << "testInvalidFormula" << std::endl;
   auto start = high_resolution_clock::now();
   Client* client = new Client(io_context);
@@ -388,7 +380,6 @@ void testInvalidFormula ()
 
 void testInvalidFormula2()
 {
-  //TODO: Set up timer
   std::cout << "Test Name: " << "testInvalidFormula2" << std::endl;
   auto start = high_resolution_clock::now();
   Client* client = new Client(io_context);
@@ -410,6 +401,105 @@ void testInvalidFormula2()
   auto duration = duration_cast<milliseconds>(stop - start);
   std::cout << "Time: " << duration.count() << " milliseconds"<< std::endl;
 
+}
+
+void testInvalidFormula3()
+{
+  std::cout << "Test Name: " << "testInvalidFormula3" << std::endl;
+  auto start = high_resolution_clock::now();
+  Client* client = new Client(io_context);
+  std::string username = "username";
+  handshake(client, username);
+
+  client->sendNoRecieve("{\"requestType\":\"selectCell\",\"cellName\":\"A1\"}\n");
+  client->sendMessage("{\"requestType\":\"editCell\",\"cellName\":\"A1\",\"contents\":\"=AA4\"}\n");
+
+  if(currentMessage.find("requestError"))
+  {
+    std::cout << "pass" << std::endl;
+  }
+  else
+  {
+    std::cout << "fail" << std::endl;
+  }
+  auto stop = high_resolution_clock::now();
+  auto duration = duration_cast<milliseconds>(stop - start);
+  std::cout << "Time: " << duration.count() << " milliseconds"<< std::endl;
+
+}
+
+void testSendManyMessages()
+{
+  std::cout << "Test Name: " << "testSendManyMessages" << std::endl;
+  auto start = high_resolution_clock::now();
+  Client* client = new Client(io_context);
+  std::string username = "username";
+  handshake(client, username);
+
+  client->sendNoRecieve("{\"requestType\":\"selectCell\",\"cellName\":\"A1\"}\n");
+  client->sendMessage("{\"requestType\":\"editCell\",\"cellName\":\"A1\",\"contents\":\"=1+1\"}\n");
+  client->sendMessage("{\"requestType\":\"editCell\",\"cellName\":\"A1\",\"contents\":\"hello\"}\n");
+  client->sendMessage("{\"requestType\":\"editCell\",\"cellName\":\"A1\",\"contents\":\"cheese\"}\n");
+  client->sendMessage("{\"requestType\":\"editCell\",\"cellName\":\"A1\",\"contents\":\"yeet\"}\n");
+  client->sendMessage("{\"requestType\":\"editCell\",\"cellName\":\"A1\",\"contents\":\"star\"}\n");
+  client->sendMessage("{\"requestType\":\"editCell\",\"cellName\":\"A1\",\"contents\":\"=5+5\"}\n");
+  client->sendMessage("{\"requestType\":\"editCell\",\"cellName\":\"A1\",\"contents\":\"=67/3\"}\n");
+
+  if(currentMessage == "{messageType: \"cellUpdated\", cellName: \"A1\", contents: \"=67/3\"}\n")
+  {
+    std::cout << "pass" << std::endl;
+  }
+  else
+  {
+    std::cout << "fail" << std::endl;
+  }
+  auto stop = high_resolution_clock::now();
+  auto duration = duration_cast<milliseconds>(stop - start);
+  std::cout << "Time: " << duration.count() << " milliseconds"<< std::endl;
+}
+
+void testUndoAndRevert()
+{
+  std::cout << "Test Name: " << "testUndoAndRevert" << std::endl;
+  auto start = high_resolution_clock::now();
+  Client* client = new Client(io_context);
+  std::string username = "username";
+  handshake(client, username);
+
+  client->sendNoRecieve("{\"requestType\":\"selectCell\",\"cellName\":\"A1\"}\n");
+  client->sendMessage("{\"requestType\":\"editCell\",\"cellName\":\"A1\",\"contents\":\"Table\"}\n");
+  client->sendNoRecieve("{\"requestType\":\"selectCell\",\"cellName\":\"A2\"}\n");
+  client->sendMessage("{\"requestType\":\"editCell\",\"cellName\":\"A2\",\"contents\":\"hello\"}\n");
+  client->sendMessage("{\"requestType\":\"revertCell\",\"cellName\":\"A2\"}\n");
+  client->sendNoRecieve("{\"requestType\":\"selectCell\",\"cellName\":\"A1\"}\n");
+  client->sendMessage("{\"requestType\":\"editCell\",\"cellName\":\"A1\",\"contents\":\"cheese\"}\n");
+  client->sendMessage("{\"requestType\":\"undo\"}\n");
+  client->sendMessage("{\"requestType\":\"undo\"}\n");
+  client->sendMessage("{\"requestType\":\"undo\"}\n");
+  client->sendNoRecieve("{\"requestType\":\"selectCell\",\"cellName\":\"A1\"}\n");
+  client->sendMessage("{\"requestType\":\"revertCell\",\"cellName\":\"A1\"}\n");
+  client->sendMessage("{\"requestType\":\"undo\"}\n");
+  client->sendNoRecieve("{\"requestType\":\"selectCell\",\"cellName\":\"A1\"}\n");
+  client->sendMessage("{\"requestType\":\"revertCell\",\"cellName\":\"A1\"}\n");
+  client->sendMessage("{\"requestType\":\"undo\"}\n");
+  client->sendNoRecieve("{\"requestType\":\"selectCell\",\"cellName\":\"A1\"}\n");
+  client->sendMessage("{\"requestType\":\"revertCell\",\"cellName\":\"A1\"}\n");
+  client->sendMessage("{\"requestType\":\"undo\"}\n");
+  client->sendMessage("{\"requestType\":\"undo\"}\n");
+  client->sendMessage("{\"requestType\":\"undo\"}\n");
+
+
+  if(currentMessage.find("requestError"))
+  {
+    std::cout << "pass" << std::endl;
+  }
+  else
+  {
+    std::cout << "fail" << std::endl;
+  }
+  auto stop = high_resolution_clock::now();
+  auto duration = duration_cast<milliseconds>(stop - start);
+  std::cout << "Time: " << duration.count() << " milliseconds"<< std::endl;
 }
 
 std::vector<std::string> split(const std::string str, char delim)
@@ -488,7 +578,16 @@ int main(int argc, char* argv[])
           testMultipleReverts();
           break;
         case 10:
+          testUndoAndRevert();
+          break;
+        case 11:
+          testSendManyMessages();
+          break;
+        case 12:
           testLongCircularDependency();
+          break;
+        case 13:
+          testInvalidFormula3();
           break;
 
 
