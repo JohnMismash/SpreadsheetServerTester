@@ -19,6 +19,7 @@
 #include <boost/enable_shared_from_this.hpp>
 
 using boost::asio::ip::tcp;
+using namespace std::chrono;
 
 enum { max_length = 1024 };
 std::string port = "";
@@ -116,9 +117,10 @@ void handshake(Client* client, std::string username)
   client->sendMessage("spreadsheet1\n");
 }
 
-void test1()
+void testUpdateSingleCell()
 {
-  //TODO: Set up timer
+  std::cout << "Test Name: " << "testUpdateSingleCell" << std::endl;
+  auto start = high_resolution_clock::now();
   Client* client = new Client(io_context);
   std::string username = "username";
   handshake(client, username);
@@ -133,33 +135,21 @@ void test1()
   else
   {
     std::cout << "fail" << std::endl;
+
   }
+
+  auto stop = high_resolution_clock::now();
+  auto duration = duration_cast<milliseconds>(stop - start);
+  std::cout << "Time: " << duration.count() << " milliseconds"<< std::endl;
+
 }
 
-void test2()
+void testUpdateMultipleCells()
 {
   //TODO: Set up timer
-  Client* client = new Client(io_context);
-  std::string username = "username";
-  handshake(client, username);
-
-  client->sendNoRecieve("{\"requestType\":\"selectCell\",\"cellName\":\"A1\"}\n");
-  client->sendMessage("{\"requestType\":\"editCell\",\"cellName\":\"A1\",\"contents\":\"hello\"}\n");
-  client->sendMessage("{\"requestType\":\"editCell\",\"cellName\":\"A1\",\"contents\":\"yeet\"}\n");
-
-  if(currentMessage == "{messageType: \"cellUpdated\", cellName: \"A1\", contents: \"yeet\"}\n")
-  {
-    std::cout << "pass" << std::endl;
-  }
-  else
-  {
-    std::cout << "fail" << std::endl;
-  }
-}
-
-void test3()
-{
-  //TODO: Set up timer
+  std::cout << "Test Name: " << "testUpdateMultipleCells" << std::endl;
+  auto start = high_resolution_clock::now();
+  bool pass = false;
   Client* client = new Client(io_context);
   std::string username = "username";
   handshake(client, username);
@@ -169,12 +159,257 @@ void test3()
 
   if(currentMessage == "{messageType: \"cellUpdated\", cellName: \"A1\", contents: \"hello\"}\n")
   {
+    pass = true;
+  }
+  else
+  {
+     pass = false;
+  }
+
+  client->sendNoRecieve("{\"requestType\":\"selectCell\",\"cellName\":\"B1\"}\n");
+  client->sendMessage("{\"requestType\":\"editCell\",\"cellName\":\"B1\",\"contents\":\"yeet\"}\n");
+  if(currentMessage == "{messageType: \"cellUpdated\", cellName: \"B1\", contents: \"yeet\"}\n")
+  {
+    if(pass)
+    {
+      std::cout << "pass" << std::endl;
+    }
+  }
+  else
+  {
+    std::cout << "fail" << std::endl;
+  }
+
+  auto stop = high_resolution_clock::now();
+  auto duration = duration_cast<milliseconds>(stop - start);
+  std::cout << "Time: " << duration.count() << " milliseconds"<< std::endl;
+}
+
+void testCircularDependency()
+{
+  //TODO: Set up timer
+  std::cout << "Test Name: " << "testCircularDependency" << std::endl;
+  auto start = high_resolution_clock::now();
+  Client* client = new Client(io_context);
+  std::string username = "username";
+  handshake(client, username);
+
+  client->sendNoRecieve("{\"requestType\":\"selectCell\",\"cellName\":\"A1\"}\n");
+  client->sendMessage("{\"requestType\":\"editCell\",\"cellName\":\"A1\",\"contents\":\"=A2+1\"}\n");
+  client->sendNoRecieve("{\"requestType\":\"selectCell\",\"cellName\":\"A2\"}\n");
+  client->sendMessage("{\"requestType\":\"editCell\",\"cellName\":\"A2\",\"contents\":\"=A1+1\"}\n");
+
+  if(currentMessage.find("requestError"))
+  {
     std::cout << "pass" << std::endl;
   }
   else
   {
     std::cout << "fail" << std::endl;
   }
+  auto stop = high_resolution_clock::now();
+  auto duration = duration_cast<milliseconds>(stop - start);
+  std::cout << "Time: " << duration.count() << " milliseconds"<< std::endl;
+}
+
+void testLongCircularDependency()
+{
+  //TODO: Set up timer
+  std::cout << "Test Name: " << "testLongCircularDependency" << std::endl;
+  auto start = high_resolution_clock::now();
+  Client* client = new Client(io_context);
+  std::string username = "username";
+  handshake(client, username);
+
+  client->sendNoRecieve("{\"requestType\":\"selectCell\",\"cellName\":\"A1\"}\n");
+  client->sendMessage("{\"requestType\":\"editCell\",\"cellName\":\"A1\",\"contents\":\"=A2+1\"}\n");
+  client->sendNoRecieve("{\"requestType\":\"selectCell\",\"cellName\":\"A2\"}\n");
+  client->sendMessage("{\"requestType\":\"editCell\",\"cellName\":\"A2\",\"contents\":\"=B5+1\"}\n");
+  client->sendNoRecieve("{\"requestType\":\"selectCell\",\"cellName\":\"B5\"}\n");
+  client->sendMessage("{\"requestType\":\"editCell\",\"cellName\":\"B5\",\"contents\":\"=A1+1\"}\n");
+
+  if(currentMessage.find("requestError"))
+  {
+    std::cout << "pass" << std::endl;
+  }
+  else
+  {
+    std::cout << "fail" << std::endl;
+  }
+  auto stop = high_resolution_clock::now();
+  auto duration = duration_cast<milliseconds>(stop - start);
+  std::cout << "Time: " << duration.count() << " milliseconds"<< std::endl;
+}
+
+void testRevert ()
+{
+  //TODO: Set up timer
+  std::cout << "Test Name: " << "testRevert" << std::endl;
+  auto start = high_resolution_clock::now();
+  Client* client = new Client(io_context);
+  std::string username = "username";
+  handshake(client, username);
+
+  client->sendNoRecieve("{\"requestType\":\"selectCell\",\"cellName\":\"A1\"}\n");
+  client->sendMessage("{\"requestType\":\"editCell\",\"cellName\":\"A1\",\"contents\":\"=1+1\"}\n");
+  client->sendMessage("{\"requestType\":\"editCell\",\"cellName\":\"A1\",\"contents\":\"hello\"}\n");
+  client->sendMessage("{\"requestType\":\"revertCell\",\"cellName\":\"A1\"}\n");
+
+  if(currentMessage == "{messageType: \"cellUpdated\", cellName: \"A1\", contents: \"=1+1\"}\n")
+  {
+    std::cout << "pass" << std::endl;
+  }
+  else
+  {
+    std::cout << "fail" << std::endl;
+  }
+  auto stop = high_resolution_clock::now();
+  auto duration = duration_cast<milliseconds>(stop - start);
+  std::cout << "Time: " << duration.count() << " milliseconds"<< std::endl;
+
+}
+
+void testMultipleReverts ()
+{
+  //TODO: Set up timer
+  std::cout << "Test Name: " << "testMultipleReverts" << std::endl;
+  auto start = high_resolution_clock::now();
+  Client* client = new Client(io_context);
+  std::string username = "username";
+  handshake(client, username);
+
+  client->sendNoRecieve("{\"requestType\":\"selectCell\",\"cellName\":\"A1\"}\n");
+  client->sendMessage("{\"requestType\":\"editCell\",\"cellName\":\"A1\",\"contents\":\"=1+1\"}\n");
+  client->sendMessage("{\"requestType\":\"editCell\",\"cellName\":\"A1\",\"contents\":\"hello\"}\n");
+  client->sendMessage("{\"requestType\":\"editCell\",\"cellName\":\"A1\",\"contents\":\"yo\"}\n");
+  client->sendMessage("{\"requestType\":\"editCell\",\"cellName\":\"A1\",\"contents\":\"dog\"}\n");
+  client->sendMessage("{\"requestType\":\"revertCell\",\"cellName\":\"A1\"}\n");
+  client->sendMessage("{\"requestType\":\"revertCell\",\"cellName\":\"A1\"}\n");
+  client->sendMessage("{\"requestType\":\"revertCell\",\"cellName\":\"A1\"}\n");
+
+  if(currentMessage == "{messageType: \"cellUpdated\", cellName: \"A1\", contents: \"=1+1\"}\n")
+  {
+    std::cout << "pass" << std::endl;
+  }
+  else
+  {
+    std::cout << "fail" << std::endl;
+  }
+  auto stop = high_resolution_clock::now();
+  auto duration = duration_cast<milliseconds>(stop - start);
+  std::cout << "Time: " << duration.count() << " milliseconds"<< std::endl;
+
+}
+
+void testUndo ()
+{
+  //TODO: Set up timer
+  std::cout << "Test Name: " << "testUndo" << std::endl;
+  auto start = high_resolution_clock::now();
+  Client* client = new Client(io_context);
+  std::string username = "username";
+  handshake(client, username);
+
+  client->sendNoRecieve("{\"requestType\":\"selectCell\",\"cellName\":\"A1\"}\n");
+  client->sendMessage("{\"requestType\":\"editCell\",\"cellName\":\"A1\",\"contents\":\"=1+1\"}\n");
+  client->sendMessage("{\"requestType\":\"editCell\",\"cellName\":\"A1\",\"contents\":\"hello\"}\n");
+  client->sendMessage("{\"requestType\":\"undo\"}\n");
+
+  if(currentMessage == "{messageType: \"cellUpdated\", cellName: \"A1\", contents: \"=1+1\"}\n")
+  {
+    std::cout << "pass" << std::endl;
+  }
+  else
+  {
+    std::cout << "fail" << std::endl;
+  }
+  auto stop = high_resolution_clock::now();
+  auto duration = duration_cast<milliseconds>(stop - start);
+  std::cout << "Time: " << duration.count() << " milliseconds"<< std::endl;
+
+}
+
+void testUndo2()
+{
+  //TODO: Set up timer
+  std::cout << "Test Name: " << "testUndo2" << std::endl;
+  auto start = high_resolution_clock::now();
+  Client* client = new Client(io_context);
+  std::string username = "username";
+  handshake(client, username);
+
+  client->sendNoRecieve("{\"requestType\":\"selectCell\",\"cellName\":\"A1\"}\n");
+  client->sendMessage("{\"requestType\":\"editCell\",\"cellName\":\"A1\",\"contents\":\"=1+1\"}\n");
+  client->sendMessage("{\"requestType\":\"editCell\",\"cellName\":\"A1\",\"contents\":\"hello\"}\n");
+  client->sendMessage("{\"requestType\":\"editCell\",\"cellName\":\"A1\",\"contents\":\"cheese\"}\n");
+  client->sendMessage("{\"requestType\":\"undo\"}\n");
+  client->sendMessage("{\"requestType\":\"undo\"}\n");
+
+  if(currentMessage == "{messageType: \"cellUpdated\", cellName: \"A1\", contents: \"=1+1\"}\n")
+  {
+    std::cout << "pass" << std::endl;
+  }
+  else
+  {
+    std::cout << "fail" << std::endl;
+  }
+  auto stop = high_resolution_clock::now();
+  auto duration = duration_cast<milliseconds>(stop - start);
+  std::cout << "Time: " << duration.count() << " milliseconds"<< std::endl;
+
+}
+
+
+void testInvalidFormula ()
+{
+  //TODO: Set up timer
+  std::cout << "Test Name: " << "testInvalidFormula" << std::endl;
+  auto start = high_resolution_clock::now();
+  Client* client = new Client(io_context);
+  std::string username = "username";
+  handshake(client, username);
+
+  client->sendNoRecieve("{\"requestType\":\"selectCell\",\"cellName\":\"A1\"}\n");
+  client->sendMessage("{\"requestType\":\"editCell\",\"cellName\":\"A1\",\"contents\":\"=A2)+1\"}\n");
+
+  if(currentMessage.find("requestError"))
+  {
+    std::cout << "pass" << std::endl;
+  }
+  else
+  {
+    std::cout << "fail" << std::endl;
+  }
+  auto stop = high_resolution_clock::now();
+  auto duration = duration_cast<milliseconds>(stop - start);
+  std::cout << "Time: " << duration.count() << " milliseconds"<< std::endl;
+
+}
+
+void testInvalidFormula2()
+{
+  //TODO: Set up timer
+  std::cout << "Test Name: " << "testInvalidFormula2" << std::endl;
+  auto start = high_resolution_clock::now();
+  Client* client = new Client(io_context);
+  std::string username = "username";
+  handshake(client, username);
+
+  client->sendNoRecieve("{\"requestType\":\"selectCell\",\"cellName\":\"A1\"}\n");
+  client->sendMessage("{\"requestType\":\"editCell\",\"cellName\":\"A1\",\"contents\":\"=(5+7))\"}\n");
+
+  if(currentMessage.find("requestError"))
+  {
+    std::cout << "pass" << std::endl;
+  }
+  else
+  {
+    std::cout << "fail" << std::endl;
+  }
+  auto stop = high_resolution_clock::now();
+  auto duration = duration_cast<milliseconds>(stop - start);
+  std::cout << "Time: " << duration.count() << " milliseconds"<< std::endl;
+
 }
 
 std::vector<std::string> split(const std::string str, char delim)
@@ -203,14 +438,14 @@ int main(int argc, char* argv[])
     if (argc == 1)
     {
       //std::cerr << "Usage: blocking_tcp_echo_client <host> <port>\n";
-      std::cout << "print number of tests" << std::endl;
+      std::cout << "6" << std::endl;
       return 0;
     }
 
     else if(argc != 3)
     {
-      //std::cerr << "Invalid arguments: Must provide two arguments or zero arguments\n";
-      std::cout << argc << std::endl;
+
+      std::cout << "Invalid number of arguments" << std::endl;
       return 1;
     }
 
@@ -218,36 +453,47 @@ int main(int argc, char* argv[])
     {
       std::string addressAndPort= argv[2];
       std::vector<std::string> data = split(addressAndPort, ':');
-      std::cout << "data size " << data.size() << std::endl;
-      //strcpy(address, data[0].c_str());
-      std::cout << data[0] << std::endl;
-      std::cout << data[1] << std::endl;
+
       address = data[0];
       port = data[1];
-      std::cout << "got address" << std::endl;
-      //strcpy(port, data[1].c_str());
-      //address = data[0];
 
-      //port = data[1];
-      int test_number = 2;
+      int test_number = atoi(argv[1]);
 
       switch(test_number) {
         case 1:
-          test1();
-          break; //optional
+          testUpdateSingleCell();
+          break;
         case 2:
-          test2();
-          break; //optional
+          testUpdateMultipleCells();
+          break;
         case 3:
-          //test3();
+          testCircularDependency();
           break;
         case 4:
-          //test4();
+          testRevert();
           break;
+        case 5:
+          testUndo();
+          break;
+        case 6:
+          testInvalidFormula();
+          break;
+        case 7:
+          testInvalidFormula2();
+          break;
+        case 8:
+          testUndo2();
+          break;
+        case 9:
+          testMultipleReverts();
+          break;
+        case 10:
+          testLongCircularDependency();
+          break;
+
 
         default:
           break;
         }
-        //test1();
     }
 }
